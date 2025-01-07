@@ -31,7 +31,7 @@ _BLOCK_END = "# END SCFW MANAGED BLOCK"
 
 _GREETING = (
     "Thank you for using scfw, the Supply-Chain Firewall by Datadog!\n\n"
-    "scfw is a tool for preventing the installation of malicious PyPI and npm packages.\n\n"
+    "scfw is a tool for preventing the installation of malicious PyPI, npm, and Ruby packages.\n\n"
     "This script will walk you through setting up your environment to get the most out\n"
     "of scfw. You can rerun this script at any time.\n"
 )
@@ -99,6 +99,7 @@ def _get_questions() -> list[inquirer.questions.Question]:
             message="Would you like to set a shell alias to run all npm commands through the firewall?",
             default=True
         ),
+        # TODO: alias bundle
         inquirer.Confirm(
             name="enable_dd_logs",
             message="Would you like to enable sending firewall logs to Datadog?",

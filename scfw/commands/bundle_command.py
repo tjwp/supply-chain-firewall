@@ -25,7 +25,7 @@ _UNSUPPORTED_BUNDLER_VERSION = f"bundler before v{MIN_BUNDLER_VERSION} is not su
 # The following gems are missing
 #  * nokogiri (1.13.8)
 #  * rake (13.0.6)
-_MISSING_GEM_PATTERN = re.compile(r'^\s+\*\s+(\S+)\s+\(([^)]+)\)')
+_MISSING_GEM_PATTERN = re.compile(r'^\s*\*\s+(\S+)\s+\(([^)]+)\)')
 
 
 class BundleCommand(PackageManagerCommand):

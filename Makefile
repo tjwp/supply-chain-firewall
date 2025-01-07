@@ -26,6 +26,9 @@ test-pip:
 test-npm:
 	COVERAGE_FILE=.coverage.npm coverage run -m pytest tests/commands/test_npm.py tests/commands/test_npm_command.py
 
+test-bundle:
+	COVERAGE_FILE=.coverage.bundle coverage run -m pytest tests/commands/test_bundle.py tests/commands/test_bundle_command.py
+
 test-verifiers:
 	COVERAGE_FILE=.coverage.verifiers coverage run -m pytest tests/verifiers
 

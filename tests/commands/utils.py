@@ -26,6 +26,8 @@ def list_installed_packages(ecosystem: ECOSYSTEM) -> str:
             command = [sys.executable, "-m", "pip", "list", "--format", "freeze"]
         case ECOSYSTEM.NPM:
             command = ["npm", "list", "--all"]
+        case ECOSYSTEM.BUNDLE:
+            command = ["bundle", "list"]
 
     p = subprocess.run(command, check=True, text=True, capture_output=True)
     return p.stdout.lower()
