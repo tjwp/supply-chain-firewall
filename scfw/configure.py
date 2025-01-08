@@ -105,6 +105,11 @@ def _get_questions() -> list[inquirer.questions.Question]:
             default=True
         ),
         inquirer.Confirm(
+            name="alias_gem",
+            message="Would you like to set a shell alias to run all gem commands through the firewall?",
+            default=True
+        ),
+        inquirer.Confirm(
             name="enable_dd_logs",
             message="Would you like to enable sending firewall logs to Datadog?",
             default=False,
@@ -145,6 +150,8 @@ def _format_answers(answers: dict) -> str:
         config += '\nalias npm="scfw run npm"'
     if answers["alias_bundle"]:
         config += '\nalias bundle="scfw run bundle"'
+    if answers["alias_gem"]:
+        config += '\nalias gem="scfw run gem"'
     if answers["dd_api_key"]:
         config += f'\nexport {DD_API_KEY_VAR}="{answers["dd_api_key"]}"'
     if answers["dd_log_level"]:

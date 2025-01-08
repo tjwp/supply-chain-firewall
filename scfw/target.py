@@ -40,3 +40,5 @@ class InstallTarget:
                 return f"{self.package}@{self.version}"
             case ECOSYSTEM.BUNDLE:
                 return f"{self.package}@{self.version}"
+            case ECOSYSTEM.GEM:
+                return f"{self.package}@{self.version}"

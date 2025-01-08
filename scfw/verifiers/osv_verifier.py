@@ -13,7 +13,7 @@ from scfw.verifier import FindingSeverity, InstallTargetVerifier
 
 _log = logging.getLogger(__name__)
 
-_OSV_ECOSYSTEMS = {ECOSYSTEM.PIP: "PyPI", ECOSYSTEM.NPM: "npm", ECOSYSTEM.BUNDLE: "RubyGems"}
+_OSV_ECOSYSTEMS = {ECOSYSTEM.PIP: "PyPI", ECOSYSTEM.NPM: "npm", ECOSYSTEM.BUNDLE: "RubyGems", ECOSYSTEM.GEM: "RubyGems"}
 
 _OSV_DEV_QUERY_URL = "https://api.osv.dev/v1/query"
 _OSV_DEV_VULN_URL_PREFIX = "https://osv.dev/vulnerability"
