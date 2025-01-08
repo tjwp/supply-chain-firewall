@@ -38,3 +38,5 @@ class InstallTarget:
                 return f"{self.package}-{self.version}"
             case ECOSYSTEM.NPM:
                 return f"{self.package}@{self.version}"
+            case ECOSYSTEM.BUNDLE:
+                return f"{self.package}@{self.version}"

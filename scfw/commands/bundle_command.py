@@ -2,12 +2,12 @@
 Defines a subclass of `PackageManagerCommand` for `bundle` commands.
 """
 
-import json
 import logging
 import os
 import re
 import subprocess
 from typing import Optional
+import tempfile
 
 from packaging.version import InvalidVersion, Version, parse as version_parse
 
@@ -92,7 +92,7 @@ class BundleCommand(PackageManagerCommand):
         # the command is automatically safe to run
         if (not any(cmd in self._command for cmd in ["install", "update", "add"]) or
             "--help" in self._command or
-            ("add" in self._command and "--skip-install" in self._command)):
+                ("add" in self._command and "--skip-install" in self._command)):
             return []
 
         try:
@@ -103,52 +103,52 @@ class BundleCommand(PackageManagerCommand):
                 check_command = [self._executable, "check", "--dry-run"]
                 check_output = subprocess.run(check_command, text=True, capture_output=True)
 
+                _log.debug("bundle check output: %s", check_output)
+
                 # bundle check returns 1 when gems are missing
                 if check_output.returncode == 1:
-                    for line in check_output.stdout.splitlines():
+                    for line in check_output.stderr.splitlines():
                         if match := _MISSING_GEM_PATTERN.match(line):
                             name, version = match.groups()
+                            _log.debug("Found missing gem: %s %s", name, version)
                             targets.append(InstallTarget(ECOSYSTEM.BUNDLE, name, version))
             elif "add" in self._command:
-                # Create a modified command that only updates the Gemfile
-                add_command = self._command.copy()
-                if "--skip-install" not in add_command:
-                    add_command.append("--skip-install")
+                # For bundle add, we make a temporary copy of the Gemfile.
+                # We run bundle add on the copy with --skip-install.
+                # We then check for gems that would be installed using bundle check.
 
-                try:
-                    # Temporarily add the gem(s) to the Gemfile
-                    subprocess.run(add_command, check=True, capture_output=True)
+                # Create a temporary directory that will be automatically cleaned up
+                with tempfile.TemporaryDirectory() as tmp_dir:
+                    tmp_gemfile = os.path.join(tmp_dir, "Gemfile")
 
-                    # Use bundle check to determine what would be installed
+                    # Copy existing Gemfile if it exists
+                    if os.path.exists("Gemfile"):
+                        with open("Gemfile", "r") as src, open(tmp_gemfile, "w") as dst:
+                            dst.write(src.read())
+
+                    # Set up environment with BUNDLE_GEMFILE for these specific commands
+                    env = os.environ.copy()
+                    env["BUNDLE_GEMFILE"] = tmp_gemfile
+
+                    # Modify the command to use --skip-install
+                    add_command = self._command.copy()
+                    if "--skip-install" not in add_command:
+                        add_command.append("--skip-install")
+
+                    # Add the gem to temporary Gemfile
+                    add_output = subprocess.run(add_command, env=env, check=False, capture_output=True)
+                    _log.debug("bundle add output: %s", add_output)
+
+                    # Check what would be installed using the temporary Gemfile
                     check_command = [self._executable, "check", "--dry-run"]
-                    check_output = subprocess.run(check_command, text=True, capture_output=True)
+                    check_output = subprocess.run(check_command, env=env, text=True, capture_output=True)
+                    _log.debug("bundle check output: %s", check_output)
 
-                    # bundle check returns 1 when gems are missing
                     if check_output.returncode == 1:
-                        for line in check_output.stdout.splitlines():
+                        for line in check_output.stderr.splitlines():
                             if match := _MISSING_GEM_PATTERN.match(line):
                                 name, version = match.groups()
                                 targets.append(InstallTarget(ECOSYSTEM.BUNDLE, name, version))
-
-                    # Clean up by removing the added gems
-                    # Extract just the gem names from the original command
-                    gems_to_remove = []
-                    i = 2  # Skip "bundle add"
-                    while i < len(self._command):
-                        arg = self._command[i]
-                        if arg.startswith("-"):
-                            # Skip any option and its potential value
-                            i += 2 if i + 1 < len(self._command) and not self._command[i + 1].startswith("-") else 1
-                            continue
-                        gems_to_remove.append(arg)
-                        i += 1
-
-                    remove_command = [self._executable, "remove"] + gems_to_remove
-                    subprocess.run(remove_command, check=True, capture_output=True)
-
-                except subprocess.CalledProcessError:
-                    _log.info("Error while determining bundle add targets")
-                    return []
             else:
                 # For bundle update, use bundle outdated --parseable to identify gems that would be updated
                 # First get the list of gems specified in the update command
@@ -162,18 +162,26 @@ class BundleCommand(PackageManagerCommand):
                 if update_gems:
                     outdated_command.extend(update_gems)
 
-                outdated_output = subprocess.run(outdated_command, check=True, text=True, capture_output=True)
-
+                outdated_output = subprocess.run(outdated_command, text=True, capture_output=True)
+                _log.debug("bundle outdated output: %s", outdated_output)
                 # Parse output like:
-                # * rails (newest 7.0.5, installed 7.0.4, requested >= 0) in groups "default"
-                for line in outdated_output.stdout.splitlines():
-                    if line.startswith("*"):
-                        # Extract gem name and newest version
-                        parts = line.split()
-                        name = parts[1]
-                        newest = parts[3].rstrip(",")
-                        targets.append(InstallTarget(ECOSYSTEM.BUNDLE, name, newest))
+                # thor (newest 1.3.2, installed 1.3.0)
+                if outdated_output.returncode == 1:
+                    for line in outdated_output.stdout.splitlines():
+                        # Skip empty lines
+                        if not line.strip():
+                            continue
+                        try:
+                            # Extract gem name (everything before the opening parenthesis)
+                            name = line.split('(')[0].strip()
+                            # Extract newest version (between "newest" and ",")
+                            newest = line.split('newest')[1].split(',')[0].strip()
+                            targets.append(InstallTarget(ECOSYSTEM.BUNDLE, name, newest))
+                        except IndexError:
+                            _log.debug("Skipping malformed line: %s", line)
+                            continue
 
+            _log.debug("Found bundle targets: %s", targets)
             return targets
         except subprocess.CalledProcessError:
             # An error occurred while collecting targets

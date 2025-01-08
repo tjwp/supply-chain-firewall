@@ -59,6 +59,9 @@ class DatadogMaliciousPackagesVerifier(InstallTargetVerifier):
                 manifest = self._pypi_manifest
             case ECOSYSTEM.NPM:
                 manifest = self._npm_manifest
+            case ECOSYSTEM.BUNDLE:
+                # Not supported by the malicious packages dataset
+                return []
 
         # We take the more conservative approach of ignoring version numbers when
         # deciding whether the given target is malicious

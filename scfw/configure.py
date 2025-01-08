@@ -99,7 +99,11 @@ def _get_questions() -> list[inquirer.questions.Question]:
             message="Would you like to set a shell alias to run all npm commands through the firewall?",
             default=True
         ),
-        # TODO: alias bundle
+        inquirer.Confirm(
+            name="alias_bundle",
+            message="Would you like to set a shell alias to run all bundle commands through the firewall?",
+            default=True
+        ),
         inquirer.Confirm(
             name="enable_dd_logs",
             message="Would you like to enable sending firewall logs to Datadog?",
@@ -139,6 +143,8 @@ def _format_answers(answers: dict) -> str:
         config += '\nalias pip="scfw run pip"'
     if answers["alias_npm"]:
         config += '\nalias npm="scfw run npm"'
+    if answers["alias_bundle"]:
+        config += '\nalias bundle="scfw run bundle"'
     if answers["dd_api_key"]:
         config += f'\nexport {DD_API_KEY_VAR}="{answers["dd_api_key"]}"'
     if answers["dd_log_level"]:
