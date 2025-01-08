@@ -12,6 +12,7 @@ class ECOSYSTEM(Enum):
     PIP = "pip"
     NPM = "npm"
     BUNDLE = "bundle"
+    GEM = "gem"
 
     def __str__(self) -> str:
         """

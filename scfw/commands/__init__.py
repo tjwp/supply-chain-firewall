@@ -7,6 +7,7 @@ from typing import Optional
 
 from scfw.command import PackageManagerCommand
 from scfw.commands.bundle_command import BundleCommand
+from scfw.commands.gem_command import GemCommand
 from scfw.commands.npm_command import NpmCommand
 from scfw.commands.pip_command import PipCommand
 from scfw.ecosystem import ECOSYSTEM
@@ -41,6 +42,8 @@ def get_package_manager_command(
                 return ecosystem, NpmCommand(command, executable)
             case ECOSYSTEM.BUNDLE:
                 return ecosystem, BundleCommand(command, executable)
+            case ECOSYSTEM.GEM:
+                return ecosystem, GemCommand(command, executable)
 
     except ValueError:
         raise ValueError(f"Unsupported package manager '{command[0]}'")
